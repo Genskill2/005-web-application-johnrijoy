@@ -98,14 +98,14 @@ def edit(pid):
         cursor.execute("UPDATE pet SET description = ? WHERE id = ?;", [description, pid])
         conn.commit()
         
-        if sold == 'sold':
+        if sold == '1':
             cursor.execute("select sold from pet where id = ?", [pid])
             date = cursor.fetchone()[0]
             print(date)
             if date == '':            
                 today = datetime.date.today()
-                print(today)
-                print(type(today))
+                #print(today)
+                #print(type(today))
                 cursor.execute("UPDATE pet SET sold = ? WHERE id = ?;", [today, pid])
                 conn.commit()        
         return redirect(url_for("pets.pet_info", pid=pid), 302)
