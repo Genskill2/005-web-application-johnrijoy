@@ -19,7 +19,20 @@ def format_date(d):
 @bp.route("/search/<field>/<value>")
 def search(field, value):
     # TBD
-    return ""
+    conn = db.get_db()
+    cursor = conn.cursor()
+    oby = request.args.get("order_by", "id") # TODO. This is currently not used. 
+    order = request.args.get("order", "asc")
+    # order based on name, bought, sold, id
+    # print(" debug: {}, {}".format(oby, order)) 
+    if order == "asc":
+        command = "select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s, tag t, tags_pets tp where p.species = s.id AND t.name = '{}' AND tp.tag = t.id AND tp.pet = p.id order by p.{}".format(value, oby) 
+        cursor.execute(f"{command}")
+    else:
+        command = "select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s, tag t, tags_pets tp where p.species = s.id AND t.name = '{}' AND tp.tag = t.id AND tp.pet = p.id order by p.{} desc".format(value, oby)
+        cursor.execute(f"{command}")
+    pets = cursor.fetchall()
+    return render_template('index.html', pets = pets, order="desc" if order=="asc" else "asc")
 
 @bp.route("/")
 def dashboard():
@@ -27,10 +40,14 @@ def dashboard():
     cursor = conn.cursor()
     oby = request.args.get("order_by", "id") # TODO. This is currently not used. 
     order = request.args.get("order", "asc")
+    # order based on name, bought, sold, id
+    # print(" debug: {}, {}".format(oby, order)) 
     if order == "asc":
-        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.id")
+        command = "select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.{}".format(oby)
+        cursor.execute(f"{command}")
     else:
-        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.id desc")
+        command = "select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.{} desc".format(oby)
+        cursor.execute(f"{command}")
     pets = cursor.fetchall()
     return render_template('index.html', pets = pets, order="desc" if order=="asc" else "asc")
 
@@ -75,6 +92,14 @@ def edit(pid):
         description = request.form.get('description')
         sold = request.form.get("sold")
         # TODO Handle sold
+        # current model only allows to mark as sold for a previuosly unsold entry
+        # print('Debug: {}'.format(sold))
+        if sold == 'justsold':
+            today = datetime.date.today()
+            print(today)
+            print(type(today))
+            cursor.execute("UPDATE pet SET sold = ? WHERE id = ?;", [today, pid])
+            conn.commit()        
         return redirect(url_for("pets.pet_info", pid=pid), 302)
         
     
