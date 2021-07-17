@@ -94,12 +94,20 @@ def edit(pid):
         # TODO Handle sold
         # current model only allows to mark as sold for a previuosly unsold entry
         # print('Debug: {}'.format(sold))
-        if sold == 'justsold':
-            today = datetime.date.today()
-            print(today)
-            print(type(today))
-            cursor.execute("UPDATE pet SET sold = ? WHERE id = ?;", [today, pid])
-            conn.commit()        
+        
+        cursor.execute("UPDATE pet SET description = ? WHERE id = ?;", [description, pid])
+        conn.commit()
+        
+        if sold == 'sold':
+            cursor.execute("select sold from pet where id = ?", [pid])
+            date = cursor.fetchone()[0]
+            print(date)
+            if date == '':            
+                today = datetime.date.today()
+                print(today)
+                print(type(today))
+                cursor.execute("UPDATE pet SET sold = ? WHERE id = ?;", [today, pid])
+                conn.commit()        
         return redirect(url_for("pets.pet_info", pid=pid), 302)
         
     
